@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+
+var rest = require('restler');
 var fs = require('fs');
 var program = require('commander');
 var cheerio = require('cheerio');
@@ -14,16 +16,16 @@ var assertFileExists = function(infile) {
     return instr;
 };
 
-var cheerioHtmlFile = function(htmlfile) {
-    return cheerio.load(fs.readFileSync(htmlfile));
+var cheerioHtmlFile = function(htmlFileContent) {
+    return cheerio.load(htmlFileContent);
 };
 
 var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
-var checkHtmlFile = function(htmlfile, checksfile) {
-    $ = cheerioHtmlFile(htmlfile);
+var checkHtmlFile = function(htmlFileContent, checksfile) {
+    $ = cheerioHtmlFile(htmlFileContent);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
@@ -38,15 +40,42 @@ var clone = function(fn) {
     // http://stackoverflow.com/a/6772648
     return fn.bind({});
 };
+var getPageContent = function(url,checks) {
+    rest.get(url).on('complete', function(result) { 
+	doTheMagic(result,checks);
+    });
+}
+var getFileContent = function(path) {
+    if(path) {
+	return fs.readFileSync(path).toString();
+    }
+    else {
+	return null;
+    }
+}
+
+var doTheMagic = function(fileContent,checks) {
+    var checkJson = checkHtmlFile(fileContent,checks);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    console.log(outJson);
+}
 
 if(require.main == module) {
     program
-        .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-c, --checks <check_file>', 'Path to checks.json')
+        .option('-f, --file <html_file>', 'Path to index.html')
+        .option('-u, --url <html_file>', 'URL to de index.html')
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+
+    var checks = program.checks || CHECKSFILE_DEFAULT;
+    if(program.url) {
+	getPageContent(program.url,checks);
+    }
+    else {
+	var fileContent = getFileContent(program.file) ||  HTMLFILE_DEFAULT;
+	doTheMagic(fileContent,checks);
+    }
+
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
