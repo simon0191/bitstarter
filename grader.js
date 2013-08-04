@@ -47,10 +47,11 @@ var getPageContent = function(url,checks) {
 }
 var getFileContent = function(path) {
     if(path) {
+
 	return fs.readFileSync(path).toString();
     }
     else {
-	return null;
+	return false;
     }
 }
 
@@ -71,8 +72,8 @@ if(require.main == module) {
     if(program.url) {
 	getPageContent(program.url,checks);
     }
-    else {
-	var fileContent = getFileContent(program.file) ||  HTMLFILE_DEFAULT;
+    else {	
+	var fileContent =  getFileContent(program.file) ||  getFileContent(HTMLFILE_DEFAULT);
 	doTheMagic(fileContent,checks);
     }
 
