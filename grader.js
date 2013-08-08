@@ -47,7 +47,6 @@ var getPageContent = function(url,checks) {
 }
 var getFileContent = function(path) {
     if(path) {
-
 	return fs.readFileSync(path).toString();
     }
     else {
@@ -56,6 +55,7 @@ var getFileContent = function(path) {
 }
 
 var doTheMagic = function(fileContent,checks) {
+    console.log(fileContent);
     var checkJson = checkHtmlFile(fileContent,checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
